@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Gnerates history of the increment.
+Of no usage in practice as the "increment" is only a very partial information.
 
 Created on Sat Feb  8 23:09:08 2020
 
@@ -31,7 +32,7 @@ while date < datetime(2020,2,8,6):
     dats[i] = dat.extract(varss=['TD','VOD','O3D'],latRange=(-65,-35),lonRange=(180,300))
     dat.close()
     date += timedelta(hours=12)
-    i += 1    
+    i += 1
 #%%
 with gzip.open('OPZ-increment.pkl','wb') as f:
     pickle.dump(dats,f)

@@ -4,7 +4,19 @@
 Generate a list of positions of the Spirit center from manual pointing of CALIOP
 images
 
-This program must be followed by reorder_census
+This script displays the image of the bubble and then captures the pointer location
+Usage
+put the pointer on the edged and center of the bubble and use num pad to enter
+4 south edge
+6 north edge
+8 top edge
+2 bottom edge
+5 center
++ store
+
+This script must be used outside spyder as it requires graphics interaction
+
+This script must be followed by reorder_census
 
 Created on Wed Feb 12 01:09:16 2020
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate a list of positions of the Spirit center from manual pointing of CALIOP
-images
+Plot a rows of CALIOP images for the 2nd vortex
+Derived from plotL1ratio
 
 Created on Wed Feb 12 01:09:16 2020
 

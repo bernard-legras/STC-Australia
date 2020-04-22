@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate history of the trajectory from 7 January 2020
+showDiags version for the 2nd vortex
+Includes the generation of the multitime composite vorticity chart.
+Excludes composite.
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -126,7 +128,7 @@ for i in range(len(dats)):
 #%% print the positions as a function of time
 for i in range(len(trac['p'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
-    print(i,trac['dates'][i],trac['lons'][i],trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
+    print(i,trac['dates'][i],trac['lons'][i]%360,trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
 pickle.dump(trac,open('Vortex-track_2ndVortex.pkl','wb'))
 
 #%% Localisation of the vortex
@@ -228,7 +230,7 @@ if figsav:
     plt.savefig(join('figs','multivortex2_horizontal_VO.png'),**figargs)
 plt.show()
 
-#%% Show trajectory on a background that spans the latitude band
+#%% ======= Show trajectory on a background that spans the latitude band ==========
 #convert lon from (0,360) to (-180,180)
 gl = lambda x: (x+180)%360 - 180
 i = 33 # 24 Jan

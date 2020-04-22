@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate history of the trajectory from 7 January 2020
+Generate history of the trajectory of the second vortex.
+Adapted from get_traject
+This version includes the calculation of the geopotential.
+See comments in get_traject.
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -9,7 +12,7 @@ Created on Sat Feb  8 12:27:14 2020
 """
 from datetime import datetime, timedelta
 from ECMWF_N import ECMWF
-import numpy as np
+#import numpy as np
 #from zISA import zISA
 import pickle,gzip
 #import matplotlib.pyplot as plt

@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate a list of positions of the Spirit center from manual pointing of CALIOP
-images
+Generate two rows of CALIOP scatter ratio for Koobor and selected dates between
+16 Mar and 4 Apr.
+row = 1 generates first row
+row = 2 generates second row
+
+The corresponding location of the vortex is shown as a cross and a white line shows the contour
+of the half max vorticity in the vertical meridian plane passing by the center of the
+vortex projected onto that of the orbit.
 
 Created on Wed Feb 12 01:09:16 2020
 
@@ -163,19 +169,19 @@ kbw = 1.0313
 # elements: center lat, date, Exp, sel
 il = {1:[64,-52.8,'7 Jan',False,12],2:[95,-45.3,'11 Jan',False,12],3:[138,-48.8,'16 Jan',False,12],
       4:[195,-61.54,'23 Jan',False,12],5:[264,-52.66,'31 Jan',False,12],6:[344,-50.66,'9 Feb',False,12],
-      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13],9:[1,-32,'4 mar',False,14]}
+      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13]}
 
 if row == 1:
     il = {1:[61,-30,'16 Mar',False,15],2:[67,-28,'17 Mar',False,15],3:[76,-30.1,'18 Mar',False,15],
       4:[85,-29.7,'19 Mar',False,15],5:[94,-30.5,'20 Mar',False,15],6:[103,-29.1,'21 Mar',False,15],
-      7:[112,-27.7,'22 Mar',False,15],8:[121,-26.2,'23 Mar',False,15],9:[129,-26.1,'24 Mar',False,15]}
+      7:[112,-27.7,'22 Mar',False,15],8:[121,-26.2,'23 Mar',False,15]}
 elif row == 2:
-    il = {1:[15,-30,'27 Mar',False,16],2:[22,-30,'28 Mar',False,16],3:[36,-28,'30 Mar',False,16],
+    il = {0:[129,-26.1,'24 Mar',False,15],1:[15,-30,'27 Mar',False,16],2:[22,-30,'28 Mar',False,16],3:[36,-28,'30 Mar',False,16],
       4:[44,-27,'31 Mar',False,16],5:[51,-25,'1 Apr',False,16],6:[96,-23,'3 Apr',True,11],
       7:[97,-23,'4 Apr',True,11]}
 #[53,-29.9,'15 Mar',False,15]
 
-fig, ax = plt.subplots(1,9,sharey=True,figsize=(18,2.5))
+fig, ax = plt.subplots(1,8,sharey=True,figsize=(16,2.5))
 
 #il = {2:[95,-45.3,'11 Jan',False,12],9:[64,-32,'4 Mar',True,11]}
 #il = {4:[195,-61.54,'23 Jan',False,12],9:[1,-32,'4 Mar',False,14]}

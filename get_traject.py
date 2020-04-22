@@ -6,6 +6,8 @@ It select a few variables in a moving window. The data are stored
 for all times in a pickle file. Reading this pickle file stores all the data
 in memory allowing fast processing of diagnostics such as vortex tracking.
 
+The data are stored in a dictionary indexed by numbers starting from 0.
+
 Due to the unexpected life time of Koobor, the memory load is high and this
 dataset cannot be processed on low memory system.
 
@@ -16,13 +18,14 @@ The geopotential is managed in a separate history file and by get_datz
 As the history became too big and took a long time to write
 for each update, it has been cut in two parts
 
-
+predates option allows to add new dates at the beginning of the series, requiring a shift
+in the numbering.
 
 @author: Bernard Legras
 """
 from datetime import datetime, timedelta
 from ECMWF_N import ECMWF
-import numpy as np
+#import numpy as np
 #from zISA import zISA
 import pickle,gzip
 #import matplotlib.pyplot as plt

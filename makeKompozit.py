@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Make a compozit 
+Make a compozit image of the vortex by aveaging its properties over a set of dates
+The composite is made for vorticity, temperature anomaly, ozone anomaly and meridional wind
+The anomalies are defined with respect to the zonal mean on each date.
+
+TODO: improve by defining the anomaly with respect to a zonal average over a time
+(will not change a lot)
+
+It produces 3D plots (not convincing) and 2D vertical and horizontal sections
+
+TO DO: makes 3D plots as surfaces in 3D (ball of vorticity and ozone, wind torus and dipole
+                                         of temperature)
 
 Created on Sat Feb  8 12:27:14 2020
 
 @author: Bernard Legras
 """
-from datetime import datetime, timedelta
+#from datetime import datetime, timedelta
 from ECMWF_N import ECMWF
 import numpy as np
 #from zISA import zISA
-import constants as cst
+#import constants as cst
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D # yes it is used
+from mpl_toolkits.mplot3d import Axes3D # yes it is used, do not remove
 from matplotlib import cm
 #from matplotlib.text import TextPath
 import gzip,pickle
@@ -27,10 +37,10 @@ if 'gort' == socket.gethostname():
     rootdir = '/dkol/data/STC/STC-Australia'
 elif 'satie' in socket.gethostname():
     rootdir = '/data/STC/STC-Australia'
-    
+
 figsav = True
 figargs = dict(bbox_inches='tight',dpi=300)
-    
+
 # =============================================================================
 # #%%
 # with gzip.open('OPZ-extract-1.pkl','rb') as f:
@@ -44,19 +54,19 @@ figargs = dict(bbox_inches='tight',dpi=300)
 # print(len(dats),len(datz))
 # =============================================================================
 
-#%%    
+#%%
 trac = pickle.load(open('Vortex-track.pkl','rb'))
-   
+
 #%% print the positions as a function of time
 for i in range(len(trac['dates'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i],trac['lats'][i],'{:2.1f}'.format(trac['z'][i]),trac['kz'][i])
-    
+
 # =============================================================================
 # #%% Kompozit
 # # The composit is made from 44 (29Jan) to 65 (8 Feb)
 # # and from 62 (4 Feb) to 87 (16 Feb)
-# # and from 82 (14 Feb) to 103 (24 Feb)   
+# # and from 82 (14 Feb) to 103 (24 Feb)
 # kompozit={}
 # jdy = 6
 # idx = 8
@@ -81,9 +91,9 @@ for i in range(len(trac['dates'])):
 # kompozit['O3ano'] /= ns
 # kompozit['Tano'] /= ns
 # =============================================================================
-#%% Alternate composite that removes the mean temperature and ozone profile at the same latitude 
+#%% Alternate composite that removes the mean temperature and ozone profile at the same latitude
 # Because of this average removal we need to use full files instead od dats
-# The composit is made from 44 (29Jan) to 65 (8 Feb)
+# The composit is made (succesive versions) from 44 (29Jan) to 65 (8 Feb)
 # and from 62 (4 Feb) to 87 (16 Feb)
 # and from 82 (14 Feb) to 103 (24 Feb)
 # and from 42 (25 Jan) to 99 (22 Feb)
@@ -96,16 +106,19 @@ iend = 100
 kompozit['VO'] = np.zeros(shape=(1+2*kdz,1+2*jdy,1+2*idx))
 kompozit['O3ano'] = np.zeros(shape=(1+2*kdz,1+2*jdy,1+2*idx))
 kompozit['Tano'] = np.zeros(shape=(1+2*kdz,1+2*jdy,1+2*idx))
+kompozit['V'] = np.zeros(shape=(1+2*kdz,1+2*jdy,1+2*idx))
 for i in range(istart,iend):
     print(i)
     dat = ECMWF('OPZ',trac['dates'][i])
     dat._get_var('VO')
     dat._get_var('T')
     dat._get_var('O3')
+    dat._get_var('V')
     ix = np.where(dat.attr['lons']>=trac['lons'][i])[0][0]
     jy = np.where(dat.attr['lats']>=trac['lats'][i])[0][0]
     kz = trac['kz'][i]
     kompozit['VO'] += dat.var['VO'][kz-kdz:kz+kdz+1,jy-jdy:jy+jdy+1,ix-idx:ix+idx+1]
+    kompozit['V'] += dat.var['V'][kz-kdz:kz+kdz+1,jy-jdy:jy+jdy+1,ix-idx:ix+idx+1]
     meanT = np.mean(dat.var['T'],axis=2)
     meanO3 = np.mean(dat.var['O3'],axis=2)
     kompozit['O3ano'] += dat.var['O3'][kz-kdz:kz+kdz+1,jy-jdy:jy+jdy+1,ix-idx:ix+idx+1] \
@@ -116,14 +129,22 @@ ns = iend-istart
 kompozit['VO'] /= ns
 kompozit['O3ano'] /= ns
 kompozit['Tano'] /= ns
+kompozit['V'] /= ns
 kompozit['irange'] = (istart,iend)
 kompozit['dxyz'] = (idx,jdy,kdz)
 with gzip.open('kompozit_N.pkl','wb') as f:
     pickle.dump(kompozit,f)
- 
+
 #%%
-# Plot of the kompozit as 3D plots 
-# Composit vorticity
+# Plot of the kompozit as 3D plots
+
+with gzip.open('kompozit_N.pkl','rb') as f:
+    kompozit = pickle.load(f)
+jdy = 10
+idx = 12
+kdz = 12
+#%% Composit vorticity
+
 fig = plt.figure(figsize=(7,7))
 ax = fig.gca(projection = '3d')
 X1 = np.arange(-idx,idx+1)
@@ -132,7 +153,7 @@ X,Y = np.meshgrid(X1,Y1)
 Z = np.zeros_like(X)
 tt = X / np.max(X)
 buf = kompozit['VO'] - np.min(kompozit['VO'])
-buf /= np.max(buf)                              
+buf /= np.max(buf)
 for k in np.arange(kdz+4,kdz-4-1,-4):
     ax.plot_surface(X,Y,Z-k+kdz,rstride=1,cstride=1,facecolors = cm.jet(buf[k,...]))
 ax.set_xlabel('longitude (degree)')
@@ -152,7 +173,7 @@ X,Y = np.meshgrid(X1,Y1)
 Z = np.zeros_like(X)
 tt = X / np.max(X)
 buf = kompozit['O3ano'] - np.min(kompozit['O3ano'])
-buf /= np.max(buf)                              
+buf /= np.max(buf)
 for k in np.arange(kdz+4,kdz-4-1,-4):
     ax.plot_surface(X,Y,Z-k+kdz,rstride=1,cstride=1,facecolors = cm.jet(buf[k,...]))
 ax.set_xlabel('longitude (degree)')
@@ -172,7 +193,7 @@ X,Y = np.meshgrid(X1,Y1)
 Z = np.zeros_like(X)
 tt = X / np.max(X)
 buf = kompozit['Tano'] - np.min(kompozit['Tano'])
-buf /= np.max(buf)                              
+buf /= np.max(buf)
 for k in np.arange(kdz+4,kdz-4-1,-4):
     ax.plot_surface(X,Y,Z-k+kdz,rstride=1,cstride=1,facecolors = cm.jet(buf[k,...]))
 ax.set_xlabel('longitude (degree)')
@@ -235,6 +256,7 @@ from matplotlib.colors import ListedColormap
 fid=open('RedWhiteBluecolorscale.txt')
 RWBmap = ListedColormap(np.array([np.genfromtxt(x.rstrip('\n').split('\t')) \
                                for x in fid.readlines()])/65535,'RWB')
+
 im3 = ax3.imshow(kompozit['Tano'][:,central,:],vmin=-5,vmax=5,cmap=RWBmap,**imargs)
 ax3.set_title('T anomaly (K)',fontsize=18)
 ax3.set_xlabel('longitude (100 km)',fontsize=16)
@@ -244,5 +266,51 @@ plt.colorbar(im3,ax=ax3)
 if figsav:
     plt.savefig(join('figs','kompo_vsect_VO3T_N_14Jan-22Feb.png'),**figargs)
 plt.show()
+
+#%% make a 2D vertical lon-alt section in the central longitude plane
+# version with vorticity and velocity
+fig,(ax0,ax1,ax2,ax3) = plt.subplots(1,4,figsize=(18.5,5),sharey=True)
+fsl = 20
+fig.subplots_adjust(left=0.02, bottom=0.12, right=0.95, top=0.78, wspace=0.05)
+central = jdy+1
+imargs = dict(aspect=1.4,interpolation='lanczos',extent=(-0.7*idx,0.7*idx,-0.5*kdz,0.5*kdz))
+im0 = ax0.imshow(1.e5*kompozit['VO'][:,central,:],cmap='jet',**imargs)
+ax0.set_title('vorticity '+u' ($10^{-5}~s^{-1}$)',fontsize=24)
+ax0.set_xlabel('longitude (100 km)',fontsize=22)
+ax0.set_ylabel('altitude (km)',fontsize=22)
+ax0.tick_params(labelsize=fsl)
+cbar0=plt.colorbar(im0,ax=ax0)
+cbar0.set_ticks([0,2,4,6,8,10])
+cbar0.ax.tick_params(labelsize=fsl)
+im1 = ax1.imshow(kompozit['V'][:,central,:],cmap='jet',**imargs)
+ax1.set_title('meridian wind'+u' ($m~s^{-1}$)',fontsize=24)
+ax1.set_xlabel('longitude (100 km)',fontsize=22)
+ax1.tick_params(labelsize=fsl)
+cbar1=plt.colorbar(im1,ax=ax1)
+cbar1.ax.tick_params(labelsize=fsl)
+im2 = ax2.imshow(1.e6*kompozit['O3ano'][:,central,:],cmap='jet',**imargs)
+ax2.set_title('O3 anomaly '+u'(mg kg$^{-1}$)',fontsize=24)
+ax2.set_xlabel('longitude (100 km)',fontsize=22)
+ax2.tick_params(labelsize=fsl)
+cbar2=plt.colorbar(im2,ax=ax2)
+cbar2.ax.tick_params(labelsize=fsl)
+from matplotlib.colors import ListedColormap
+fid=open('RedWhiteBluecolorscale.txt')
+RWBmap = ListedColormap(np.array([np.genfromtxt(x.rstrip('\n').split('\t')) \
+                               for x in fid.readlines()])/65535,'RWB')
+c=np.array([np.concatenate((np.linspace(0.16,1,7),np.ones(5))),
+            np.concatenate((np.linspace(0.16,1,7),np.linspace(1,0,6)[1:])),
+            np.concatenate((np.ones(6),np.linspace(1,0,6)))]).T
+RWBmap12 = ListedColormap(c,'RWB12',12)
+im3 = ax3.imshow(kompozit['Tano'][:,central,:],vmin=-6,vmax=6,cmap=RWBmap12,**imargs)
+ax3.set_title(u'T anomaly ($K$)',fontsize=24)
+ax3.set_xlabel('longitude (100 km)',fontsize=22)
+ax3.tick_params(labelsize=fsl)
+cbar3=plt.colorbar(im3,ax=ax3)
+cbar3.set_ticks([-6,-4,-2,0,2,4,6])
+cbar3.ax.tick_params(labelsize=fsl)
+
+if figsav:
+    plt.savefig(join('figs','kompo_vsect_VO3T_N_14Jan-22Feb_4panels.png'),**figargs)
 plt.show()
 

@@ -3,8 +3,11 @@
 """
 
 Exploring the calipso database for orbits that can interesect Koobor
-
-JFM 2020
+Version for expedited data
+In practice sel = 11 all the time
+and the box is also changing in time
+This is a real time script. It is not meant to be used beyond this context
+and only the last part of the selection is to be used at any time.
 
 @author: Bernard Legras
 """
@@ -89,18 +92,18 @@ for sel in [11,]:
         nbday = 5
     elif sel==11:
         # Rising Spirit
-        date0 = datetime(2020,4,5)
+        date0 = datetime(2020,4,11)
         # The box has been modified several times
         no0shift = True
-        box = [0,200,-55,-15]
-        nbday = 2
+        box = [-100,180,-45,0]
+        nbday = 3
 
     if update:
         with gzip.open('selCaliop_Exp_'+str(sel)+'.pkl','rb') as f:
             _,_,date00,nbday0,Cald = pickle.load(f)
         #for i in [45,46,47,49]:
         print ('read detection with ',len(Cald),' records')
-        #del Cald[]
+        del Cald[106]
         idx = len(Cald)
         print(idx)
 

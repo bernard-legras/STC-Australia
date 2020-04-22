@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate history of the trajectory from 7 January 2020
+Generate history of the trajectory of Koobor and make several diagnostic plots.
+
+Localize the vortex
+Print the positions
+Calculate the total path.
+Plot the evolution (latitude, longitude, altitude, vorticity)
+Generats combined plots with OMPS envelop, CALIOP Koobor tracking and the forcast trajectories.
+
+Calculate composites, also for the increment but this is largely outdated.
+See makecomposit script instead.
+
+Plots vorticity, ozone and T maps as horizontal sections at vortex level and vertical sections
+at vortex latitudes.
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -13,16 +25,16 @@ import numpy as np
 #from zISA import zISA
 import constants as cst
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D # yes it is used
+#from mpl_toolkits.mplot3d import Axes3D # yes it is used
 from matplotlib import cm
 from matplotlib.text import TextPath
 import gzip,pickle
 import socket
-import deepdish as dd
+#import deepdish as dd
 from os.path import join
 from PIL import Image, ImageDraw, ImageFont
 from os import chdir
-
+from scipy.optimize import curve_fit
 
 def tracker(dats,datz,lon,lat,upper=35,lower=65,idx=6,jdy=3):
     # extract volume surrounding the target point
@@ -50,6 +62,8 @@ if 'gort' == socket.gethostname():
 elif 'satie' in socket.gethostname():
     rootdir = '/data/STC/STC-Australia'
 
+figsav = False
+figargs = dict(bbox_inches='tight',dpi=300)
 #%%
 with gzip.open('OPZ-extract-1.pkl','rb') as f:
     dats = pickle.load(f)
@@ -147,7 +161,22 @@ for i in range(len(dats)):
 for i in range(len(dats)):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i],trac['lats'][i],'{:2.1f}'.format(trac['z'][i]),trac['kz'][i])
-pickle.dump(trac,open('Vortex-track.pkl','wb'))
+# beware that saving here will loose the wind tracking made in wind-census
+#pickle.dump(trac,open('Vortex-track.pkl','wb'))
+#%% Loading the version of the track that has alos the maxvind
+trac = pickle.load(open('Vortex-track-withwind.pkl','rb'))
+mean_track = pickle.load(open('Koobor-Ntrack-L1-mean.pkl','rb'))
+fctrac = pickle.load(open('Vortex-fctrack.pkl','rb'))
+
+#%% Total displacement
+trac['lats'] = np.array(trac['lats'])
+trac['lons'] = np.array(trac['lons'])
+dy = trac['lats'][1:]-trac['lats'][:-1]
+dx = (trac['lons'][1:]-trac['lons'][:-1])*np.cos(np.deg2rad(0.5*(trac['lats'][1:]+trac['lats'][:-1])))
+# Correction for crossing Greenwich
+dx[149] = ((trac['lons'][150]-trac['lons'][149]%360))*np.cos(np.deg2rad(0.5*(trac['lats'][149]+trac['lats'][150])))
+ds = np.sqrt(dx**2+dy**2)
+print('total path ',(2*np.pi*6371/360)*np.sum(ds))
 
 #%% Localisation of the vortex
 fig,((ax0,ax1),(ax2,ax3))=plt.subplots(2,2,figsize=(8,8),sharex=True)
@@ -204,9 +233,9 @@ fig = plt.figure(figsize=(5,4))
 plt.errorbar(mean_track['dates'],mean_track['centroid_lat'],
             yerr=np.array([mean_track['centroid_lat']-mean_track['south_lat'],
                             mean_track['north_lat']-mean_track['centroid_lat']]),
-            marker='s',ls='',elinewidth=2,ecolor='red',ms=8,mec='red',
+            marker='s',ls='',elinewidth=2,ecolor='red',ms=6,mec='red',
             mfc=[1,.6,.6],alpha=1,lolims=True,uplims=True,zorder=0)
-plt.plot(trac['dates'][:lcut],trac['lats'][:lcut],linewidth=4,alpha=0.8)
+plt.plot(trac['dates'][:lcut],trac['lats'][:lcut],'b',linewidth=2,alpha=1)
 plt.ylabel('Latitude (°)',fontsize=16)
 fig.autofmt_xdate()
 if figsav:
@@ -215,11 +244,11 @@ if figsav:
 plt.show()
 #%% Longitude
 fig = plt.figure(figsize=(5,4))
-plt.plot(trac['dates'][:122],np.array(trac['lons'][:122]) %360,'-b',linewidth=4)
+plt.plot(trac['dates'][:122],np.array(trac['lons'][:122]) %360,'-b',linewidth=2)
 plt.plot(mean_track['dates'],mean_track['centroid_lon'] % 360,
-            marker='s',alpha=1,ls='',ms=8,mec='red',mfc=[1,.6,.6],zorder=1)
+            marker='s',alpha=1,ls='',ms=6,mec='red',mfc=[1,.6,.6],zorder=1)
 plt.plot(trac['dates'][122:lcut],np.array(trac['lons'][122:lcut]) %360,'-b',
-         linewidth=4,alpha=0.7)
+         linewidth=2,alpha=1)
 plt.ylabel('Longitude (°)',fontsize=16)
 fig.autofmt_xdate()
 if figsav:
@@ -243,9 +272,126 @@ if figsav:
     plt.savefig(join('figs','VortexMotionWKoobor-altitude.png'),**figargs)
     plt.savefig(join('figs','VortexMotionWKoobor-altitude.pdf'),**figargs)
 plt.show()
-#%% Vorticty
+#%% PT as a function of time
 fig = plt.figure(figsize=(5,4))
-plt.plot(trac['dates'],1.e5*np.array(trac['vo']),linewidth=4)
+# conversion of the z altitude in potential temperature using the standard pressure levels
+# for pressure (as we are at levels where b is zero or very small
+nb_K = len(mean_track['dates'])
+mean_track['centroid_pt']=[]
+mean_track['bot_pt']=[]
+mean_track['top_pt']=[]
+for k in range(nb_K):
+    date = mean_track['dates'][k]
+    # stupid way to get the bracketting dates in dats and datz
+    i=0
+    try:
+        while trac['dates'][i]<date:
+            i +=1
+    except IndexError:
+        print('no bracketting dates in vortex position')
+        i = len(dats)-1
+    lon = mean_track['centroid_lon'][k]
+    if k ==0 : lon = dats[i].attr['lons'].min()
+    lat = mean_track['centroid_lat'][k]
+    jy = int(np.floor(lat-dats[i].attr['lats'][0]))
+    if lon < dats[i].attr['lons'][0]: lon += 360
+    if lon > dats[i].attr['lons'][-1]: lon -= 360
+    ix = int(np.floor(lon-dats[i].attr['lons'][0]))
+    Z = datz[i].var['Z'][:,jy,ix]/1000
+    PT = dats[i].var['T'][:,jy,ix]*(cst.p0/dats[i].attr['pscale'])**cst.kappa
+    rr = np.interp([mean_track['bot_alt'][k],mean_track['centroid_alt'][k],mean_track['top_alt'][k]],
+                   np.flip(Z),np.flip(PT))
+    mean_track['bot_pt'].append(rr[0])
+    mean_track['centroid_pt'].append(rr[1])
+    mean_track['top_pt'].append(rr[2])
+mean_track['bot_pt'] = np.array(mean_track['bot_pt'])
+mean_track['top_pt'] = np.array(mean_track['top_pt'])
+mean_track['centroid_pt'] = np.array(mean_track['centroid_pt'])
+days = days = 0.5*np.arange(len(trac['pt']))
+def func(x,pt0,a):
+    return pt0 + a*x
+[pt0,s],cov = curve_fit(func,days,trac['pt'])
+print('slope ',s, 'error',np.sqrt(cov[1,1]))
+linear = pt0 + s*days
+# second slope, defined manually
+linear2 = 430 +10*days[0:-1:2]
+plt.errorbar(mean_track['dates'],mean_track['centroid_pt'],
+            yerr=np.array([mean_track['centroid_pt']-mean_track['bot_pt'],
+                            mean_track['top_pt']-mean_track['centroid_pt']]),
+            marker='s',alpha=1,ls='',elinewidth=2,ecolor='red',ms=6,mec='red',
+            mfc=[1,.6,.6],lolims=True,uplims=True,zorder=0)
+alt = True
+if alt:
+    plt.plot(trac['dates'],linear,'chartreuse',linewidth=4,alpha=1)
+    plt.plot(trac['dates'],trac['pt'],'b',linewidth=2,alpha=1)
+else:
+    plt.plot(trac['dates'],linear,'chartreuse',linewidth=12,alpha=0.8)
+    plt.plot(trac['dates'],trac['pt'],'#1f77b4',linewidth=4,alpha=1)
+# omps envelop, daily from 1st january
+omps_pt= np.array([457.94739,465.18091,471.88022,482.98096,502.47852,516.90887,530.91724,544.73285,
+                    555.78003,567.56854,579.21661,587.66827,595.73944,602.06952,612.46533,622.69983,
+                    629.44269,635.69403,646.58179,657.42377,671.48468,685.19342,694.54266,709.04419,
+                    718.07141,727.20239,736.59918,746.93414,757.00909,766.65912,771.09344,786.7049,
+                    787.88043,804.14856,808.04327,818.61462,823.40588,818.46271,823.82898,832.42468,
+                    831.78986,844.30994,838.17078,848.90808,869.30945,873.3194,878.54468,892.10864,
+                    891.4577,911.31042,919.52185,926.99329,935.46539,948.50848,954.85278,968.4303,
+                    973.48682,972.12866,972.1026,978.64417,986.34058,986.39709,986.6178,974.41125,
+                    981.24072,994.46887,987.02588,985.87354,984.31378,970.83569,997.20081,1004.4673,
+                    1006.1387,1020.7477,1028.6184,1028.9413,1048.6719,1033.2819,1032.6873,1031.6803,
+                    1031.4086,1024.0687,1031.1621,1030.5052,1044.3944,1058.7761,1052.4127,1036.8749,
+                    1036.0732,1020.4423,1014.8234,993.04846,980.09137,978.53003,985.88544,992.13104,
+                    1000.3923,1005.7159,1013.7955,1005.2723])
+
+omps_z = np.array([16.5,17.5,18.5,18.5,19.5,20.5,20.5,21.5,21.5,22.5,21.5,22.5,23.5,23.5,23.5,23.5,
+                   23.5,23.5,24.5,24.5,24.5,25.5,25.5,26.5,26.5,26.5,27.5,26.5,27.5,27.5,28.5,28.5,
+                   28.5,28.5,29.5,29.5,30.5,29.5,30.5,29.5,29.5,30.5,29.5,30.5,31.5,31.5,31.5,31.5,
+                   31.5,30.5,32.5,31.5,32.5,32.5,32.5,32.5,32.5,33.5,33.5,33.5,32.5,32.5,33.5,33.5,
+                   33.5,33.5,33.5,33.5,34.5,32.5,33.5,33.5,33.5,35.5,34.5,34.5,34.5,34.5,33.5,34.5,
+                   33.5,34.5,34.5,34.5,33.5,34.5,34.5,35.5,36.5,33.5,32.5,33.5,32.5,33.5,32.5,34.5,
+                   33.5,33.5,34.5,33.5])
+
+omps_dates = [datetime(2020,1,1,12) + timedelta(days=n) for n in range(len(omps_pt))]
+
+omps_pt_calc=[]
+for k in range(len(omps_pt)):
+    date = omps_dates[k]
+    # stupid way to get the bracketting dates in dats and datz
+    i=0
+    try:
+        while trac['dates'][i]<date:
+            i +=1
+    except IndexError:
+        print('no bracketting dates in vortex position')
+        i = len(dats)-1
+    ix = trac['ix'][i]
+    jy = trac['jy'][i]
+    Z = datz[i].var['Z'][:,jy,ix]/1000
+    PT = dats[i].var['T'][:,jy,ix]*(cst.p0/dats[i].attr['pscale'])**cst.kappa
+    omps_pt_calc.append(np.interp(omps_z[k],np.flip(Z),np.flip(PT)))
+
+if alt:
+    plt.plot(omps_dates[:31],linear2[:31],'dimgrey',linewidth=4,alpha=1)
+    plt.plot(omps_dates,omps_pt_calc,'cyan',linewidth=2,alpha=1)
+else:
+    plt.plot(omps_dates[:31],linear2[:31],'c',linewidth=8,alpha=0.7)
+    plt.plot(omps_dates,omps_pt_calc,'darkorange',linewidth=4,alpha=0.8)
+
+for date in fctrac:
+    ns = fctrac[date]['survival']+1
+    plt.plot(fctrac[date]['dates'][:ns],fctrac[date]['pt'][:ns],'k',linewidth=2)
+plt.ylabel('Potential temperature (K)',fontsize=16)
+fig.autofmt_xdate()
+if figsav:
+    if alt:
+        plt.savefig(join('figs','VortexMotionWKoobor-PT_alt.png'),**figargs)
+        plt.savefig(join('figs','VortexMotionWKoobor-PT_alt.pdf'),**figargs)
+    else:
+        plt.savefig(join('figs','VortexMotionWKoobor-PT.png'),**figargs)
+        plt.savefig(join('figs','VortexMotionWKoobor-PT.pdf'),**figargs)
+plt.show()
+#%% Vorticity
+fig = plt.figure(figsize=(5,4))
+plt.plot(trac['dates'],1.e5*np.array(trac['vo']),'b',linewidth=3)
 for date in fctrac:
     ns = fctrac[date]['survival']+1
     plt.plot(fctrac[date]['dates'][:ns],1.e5*np.array(fctrac[date]['vo'][:ns]),'k',linewidth=2)

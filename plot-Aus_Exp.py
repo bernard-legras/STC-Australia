@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Shows the sequence of CALIOP sectiosn in the vicinity of the July 2018
-eruption of the Ambae on 26 July at 21
+Produce CALIOP plots for the selected expedited orbits data
 """
 import pickle,gzip
 import matplotlib.pyplot as plt
@@ -54,7 +53,7 @@ else:
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--sel",type=int,choices=[0,1,2,3,4,5,6,7],help="selection")
 
-firsti = 98
+firsti = 104
 
 sel = 11
 figsav = True

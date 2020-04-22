@@ -3,6 +3,8 @@
 """
 
 Comparison of the census of the positions and altitudes of the vortex
+In principle should be used to combine the contribution from several contributors
+but is now limited to BL
 
 Created on Wed Feb 26 17:03:30 2020
 

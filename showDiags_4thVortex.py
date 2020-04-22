@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate history of the trajectory from 7 January 2020
+showDiags version for the 4th vortex
+Includes the generation of the multitime composite vorticity chart.
+Excludes composite.
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -15,14 +17,13 @@ import constants as cst
 import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D # yes it is used
 #from matplotlib import cm
-from matplotlib.text import TextPath
+#from matplotlib.text import TextPath
 import gzip,pickle
 import socket
 #import deepdish as dd
 from os.path import join
 #from PIL import Image, ImageDraw, ImageFont
 #from os import chdir
-
 
 def tracker(dats,lon,lat,upper=35,lower=70,idx=6,jdy=4):
     # extract volume surrounding the target point
@@ -51,8 +52,17 @@ elif 'satie' in socket.gethostname():
     rootdir = '/data/STC/STC-Australia'
 
 #%%
-with gzip.open('OPZ-extract-4thVortex.pkl','rb') as f:
+with gzip.open('OPZ-extract-4thVortex-post.pkl','rb') as f:
+    dats2 = pickle.load(f)
+print(len(dats2))
+with gzip.open('OPZ-extract-4thVortex-pre.pkl','rb') as f:
     dats = pickle.load(f)
+print(len(dats))
+
+for i in range(1,18):
+    del dats2[i]
+for i in range(18,82):
+    dats[46+i-18] = dats2[i]
 print(len(dats))
 
 #%%
@@ -67,10 +77,12 @@ trac={'dates':[],'lons':[],'lats':[],'alts':[],'vo':[],'z':[],'T':[],'p':[],
 #date = datetime(2020,1,7,6)
 lon = 270
 lat = -80
-date = datetime(2020,1,20,6)
-for i in range(0,74):
+lon = 360 - 163
+lat = -62
+date = datetime(2020,1,6,6)
+for i in range(0,102):
     print(i)
-    lower = 50
+    lower = 63
     upper= 35
     idx = 6
     jdy = 4
@@ -79,13 +91,21 @@ for i in range(0,74):
         lon = 2*lon - trac['lons'][-2]
         lat = 2*lat - trac['lats'][-2]
     except: pass
-    if i == 70:
+    if i == 12:
+        lon = 225; idx=4; upper=51; lower =53
+    if i == 98:
         lon -= 360
-    if i == 71:
+    if i == 99:
         lon += 360
-    if i >= 74:
+    if i >= 46:
+        lower = 50
+        upper= 35
+    if i >= 102:
         lower = 40
         idx = 2; idy = 2
+    if i == 26: upper = 45
+    #if i == 4: lower = 55
+    #if i == 5: upper = 45
     # help
     [alt,lat,lon,vo,z,T,o3,p,ix,jy,kz] = tracker(dats[i],lon,lat,lower=lower,upper=upper,idx=idx,jdy=jdy)
     #[alt,lat,lon,vo,z,T,o3,p,ix,jy,kz] = tracker(dats[i],lon,lat,lower=lower,upper=upper,idx=idx,jdy=jdy)
@@ -109,7 +129,13 @@ for i in range(len(trac['p'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i]%360,trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
 pickle.dump(trac,open('Vortex-track_4thVortex.pkl','wb'))
-
+#%% reload IFS trac dand TROPOMI TRAC
+trac = pickle.load(open('Vortex-track_4thVortex.pkl','rb'))
+for i in range(len(trac['p'])):
+    print(i,trac['dates'][i],trac['lons'][i]%360,trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
+with gzip.open('figs/_Silvia/AI_4v.pkl','rb') as f:
+    AIT = pickle.load(f)
+AITdates=AIT[:,1]
 #%% Localisation of the vortex
 fig,((ax0,ax1),(ax2,ax3))=plt.subplots(2,2,figsize=(8,8),sharex=True)
 ax0.plot(trac['dates'],trac['lats'],linewidth=4)
@@ -135,6 +161,24 @@ if figsav:
     plt.savefig(join('figs','VortexMotion_4thVortex_2panel.png'),**figargs)
     plt.savefig(join('figs','VortexMotion_4thVortex_2panel.pdf'),**figargs)
 plt.show()
+#%% Variant where each panel is a figure
+lcut = -1
+fig = plt.figure(figsize=(6,3))
+plt.plot(trac['dates'][6:lcut],trac['alts'][6:lcut],linewidth=4)
+plt.ylabel('Altitude (km)')
+fig.autofmt_xdate()
+if figsav:
+    plt.savefig(join('figs','VortexMotion_4thVortex_altitude.png'),**figargs)
+    plt.savefig(join('figs','VortexMotion_4thVortex_altitude.pdf'),**figargs)
+plt.show()
+fig = plt.figure(figsize=(6,3))
+plt.plot(trac['dates'][6:lcut],1.e5*np.array(trac['vo'][6:lcut]),linewidth=4)
+plt.ylabel(u'Vorticity (10$^{-5}$ s$^{-1}$)')
+fig.autofmt_xdate()
+if figsav:
+    plt.savefig(join('figs','VortexMotion_4thVortex_vorticity.png'),**figargs)
+    plt.savefig(join('figs','VortexMotion_4thVortex_vorticity.pdf'),**figargs)
+plt.show()
 #%% Show trajectory on a background that spans the latitude band
 #convert lon from (0,360) to (-180,180)
 gl = lambda x: (x+180)%360 - 180
@@ -151,18 +195,18 @@ if figsav:
     plt.savefig(join('figs','multivortex4_horizontal_VO.png'),**figargs)
 plt.show()
 
-#%% Show trajectory on a background that spans the latitude band
+#%% ========= Show trajectory on a background that spans the latitude band =============
 #convert lon from (0,360) to (-180,180)
 gl = lambda x: (x+180)%360 - 180
-i = 36
+i = 36+28
 kz = trac['kz'][i]
-events = [16,46,68]
+events = [6,12,19,28,16+28,46+28,68+28]
 wx = 8
 wy = 6
 wz = 8
-xwest = -90
+xwest = -179
 xeast = -20
-ysouth = -80
+ysouth = -84
 ynorth = -40
 boox = {}
 dat = ECMWF('OPZ',datetime(2020,2,7,6))
@@ -171,6 +215,9 @@ datr = dat.shift2west(-179)
 datp = datr.extract(varss=['VO'],latRange=(ysouth,ynorth),lonRange=(xwest,xeast))
 
 for i1 in events:
+    wx = 8
+    if i1 == 12: wx = 12
+    if i1 == 19: wx = 8
     kz1 = trac['kz'][i1]
     #jy1 = np.where(dats[i].attr['lats']>=trac['lats'][i1])[0][0]
     date1 = trac['dates'][i1]
@@ -191,7 +238,7 @@ for i1 in events:
     boox[i1] = np.array([[lon1-wx,lon1-wx,lon1+wx,lon1+wx,lon1-wx],
                          [max(lat1-wy,ysouth),lat1+wy,lat1+wy,max(lat1-wy,ysouth),max(lat1-wy,ysouth)]])
 #%%graphics section
-ax=datp.show('VO',kz,show=False,clim=(-2,5),scale=1.e5,aspect=1.414,figsize=(5,4))
+ax=datp.show('VO',kz,show=False,clim=(-2,5),scale=1.e5,aspect=2,figsize=(7,5))
 bbox = dict(boxstyle='round4',fc='w')
 ax.text(gl(trac['lons'][i]),trac['lats'][i]+wy-12,dat.date.strftime("%d %b"),
         ha="center",va="center",size="14",bbox=bbox)
@@ -201,6 +248,7 @@ for i1 in events:
     ax.text(gl(trac['lons'][i1]%360),trac['lats'][i1]+wy+2,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
 ax.plot(gl(np.array(trac['lons'])%360),trac['lats'],linewidth=5,color='yellow')
+ax.plot(gl(np.array(AIT[2:,2])%360),AIT[2:,3],'P',color='m',mew=0.3,markersize=13,alpha=0.7)
 ax.set_xlim(xwest,xeast)
 ax.set_title(u'vorticity (10$^{-5}$ s$^{-1}$)',fontsize=18)
 ax.set_xlabel('longitude')

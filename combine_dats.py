@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Anicllary script
 This script is used to combine the dats and datz date into a new file
 To be runed only once
 
@@ -34,12 +35,12 @@ for i2 in range(len(dats2)):
 print(len(dats),len(datz))
 
 #%%
-    
+
 with gzip.open('OPZ-Z.pkl','wb') as f:
     pickle.dump(datz,f)
 with gzip.open('OPZ-extract.pkl','wb') as f:
     pickle.dump(dats,f)
-    
+
 #%% rename images
 os.chdir('figs/O3maps')
 for i in range(len(dats2)-2,-1,-2):

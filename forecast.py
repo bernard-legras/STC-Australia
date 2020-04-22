@@ -3,6 +3,14 @@
 """
 Analysis of the forecasts for a selected number of dates.
 The vortex is tracked in the forecast in the same way as in showDiags
+Some diagnostics are plotted, like
+1) a series of vorticity images at the max
+vorticity level, combined into a composite image
+2) a plot of the analysis and the forecast for altitude (Z and PT), vorticity and ozone)
+The survival field should be set after examination of the forecast. It diagnoses the number
+of days the vortex survives in the forecast.
+
+The last part is a sandbox and this script shows an example on our to stop a run without exiting
 
 Created on Mon Feb 17 00:43:23 2020
 
@@ -62,8 +70,8 @@ update = True
 dates = [Alldates[-1],]
 dates = [datetime(2020,1,27,12)]
 #dates = Alldates[-5:]
-#%%
-# Must be run AFTER showDiags.py
+#%% Track the location of the vortex in the forecast
+# Must be run AFTER showDiags.py makes vortex position available for the starting dates of the forecast
 if update:
     fctrac = pickle.load(open('Vortex-fctrack.pkl','rb'))
 
@@ -186,7 +194,7 @@ for date in dates:
 
 pickle.dump(fctrac,open('Vortex-fctrack.pkl','wb'))
 
-#%% Tile images of the anticyclone evolution for each forecast
+#%% Reload the data and load dats for the analysis vorticity plots
 
 fctrac = pickle.load(open('Vortex-fctrack.pkl','rb'))
 
@@ -197,7 +205,8 @@ with gzip.open('OPZ-extract-2.pkl','rb') as f:
 # make tmp if not done
 try: os.mkdir('tmp')
 except: pass
-#%% generate images from the run analysis and from the forecast
+#%% Generate and tile images from the run analysis and from the forecast
+
 w0 = 3693; h0 = 955
 vmin = -2.e-5
 vmax = 10.e-5
@@ -318,7 +327,7 @@ if figsav:
     plt.savefig('figs/ascent_fcst.png',**figargs)
     plt.savefig('figs/ascent_fcst.pdf',**figargs)
 plt.show()
-#%% Vertical axis in potential temperature
+#%% Same as previous but with vertical axis in potential temperature
 fig = plt.figure()
 theta = np.array(trac['T'])*(np.array(trac['p'])/cst.p0)**(-cst.kappa)
 plt.plot(trac['dates'],theta,linewidth=4)
@@ -333,7 +342,7 @@ if figsav:
     plt.savefig('figs/ascent_fcst_PT.png',**figargs)
     plt.savefig('figs/ascent_fcst_PT.pdf',**figargs)
 plt.show()
-#%% Vorticity
+#%% Vorticity in the analysis and in the forecast
 fig = plt.figure()
 plt.plot(trac['dates'],1.e5*np.array(trac['vo']),linewidth=4)
 for date in fctrac:
@@ -346,7 +355,7 @@ if figsav:
     plt.savefig('figs/vorticity_fcst.png',**figargs)
     plt.savefig('figs/vorticity_fcst.pdf',**figargs)
 plt.show()
-#%% Ozone
+#%% Ozone in the analysis and in the forecast
 fig = plt.figure()
 plt.plot(trac['dates'],1.e6*np.array(trac['o3']),linewidth=4)
 for date in fctrac:

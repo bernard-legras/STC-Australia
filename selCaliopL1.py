@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
-Exploring the calipso database for orbits in the vicinity of the Ambae 2018 eruption
-
-Created on Sun Nov 24 18:00:45 2019
+Exploring the CALIOP database for orbits that intersect an intersection area.
+A number of selections are possible according toe the motion of the tracked structures.
+The boxes are fixed. A new selection is to be defined if a new box is needed.
 
 @author: Bernard Legras
 """
@@ -102,9 +101,14 @@ for sel in [16,]:
         nbday = 2
     elif sel==16:
         # south Atlantic+ Indian
-        box = [-50,160,-50,-10]
-        date0 = datetime(2020,4,3)
-        nbday = 3
+        box = [-50,160,-40,0]
+        date0 = datetime(2020,4,14)
+        nbday = 1
+    elif sel==17:
+        # Antarctica
+        box = [180,310,-85,-60]
+        date0 = datetime(2020,1,4)
+        nbday = 35
 
 print('sel,date0,nbday,box')
 print(sel,date0,nbday,box)
@@ -112,7 +116,7 @@ print(sel,date0,nbday,box)
 if update:
     with gzip.open('selCaliop_'+str(sel)+'.pkl','rb') as f:
         _,_,date00,nbday0,Cald = pickle.load(f)
-    #for i in range(115,122):
+    #for i in range(73,86):
     #    del Cald[i]
     idx = len(Cald)
     print ('read delection with ',idx,' records')
@@ -144,7 +148,7 @@ for iday in range(nbday):
         file = ficL1.pop()
         print(file)
         # skip day files
-        if 'ZD' in file: continue
+        if ('ZD' in file) & (sel != 17) : continue
         # open file
         try:
             hdfL1 = SD(file)

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Ancillary script
 Profile extractor from IFS and CAMS (ozone, temperature, moisture)
+Did not find a real usage (as per April 2020)
 
 Created on Thu Feb 20 16:22:03 2020
 
@@ -13,7 +15,7 @@ import numpy as np
 from ECMWF_N import ECMWF
 import constants as cst
 
-# liste of dates 
+# liste of dates
 # 11 Jan, 16 Jan, 23 Jan, 31 Jan, 9 Feb
 
 # get vortex positions at 6 and 18 every day
@@ -27,7 +29,7 @@ profs = {}
 listvar = ['T','P','Z','PT','O3','Q','PT']
 for date in dates:
     profs[date] = {}
-   
+
     for var in listvar:
         profs[date][var] = np.zeros(137)
     dateIFS = [date-timedelta(hours=6),date+timedelta(hours=6)]
@@ -35,14 +37,14 @@ for date in dates:
             np.where([trac['dates'][i] == dateIFS[1] for i in range(len(trac['dates']))])[0][0]]
     pt0 = trac['T'][pos[0]] * (trac['p'][pos[0]]/cst.p0)**(-cst.kappa)
     pt1 = trac['T'][pos[1]] * (trac['p'][pos[1]]/cst.p0)**(-cst.kappa)
-    
+
     profs[date]['pos'] = {'lon':0.5*(trac['lons'][pos[0]]+trac['lons'][pos[1]]),
                           'lat':0.5*(trac['lons'][pos[0]]+trac['lons'][pos[1]]),
                           'T':0.5*(trac['T'][pos[0]]+trac['T'][pos[1]]),
                           'p':0.5*(trac['p'][pos[0]]+trac['p'][pos[1]]),
                           'z':0.5*(trac['p'][pos[0]]+trac['p'][pos[1]]),
                           'pt':0.5*(pt0+pt1),
-                          'o3':0.5*(trac['o3'][pos[0]]+trac['o3'][pos[1]])}                                                       
+                          'o3':0.5*(trac['o3'][pos[0]]+trac['o3'][pos[1]])}
     for i in [0,1]:
         print(dateIFS[i])
         dat = ECMWF('OPZ',dateIFS[i])
@@ -59,7 +61,7 @@ for date in dates:
     for var in listvar:
         profs[date][var] *= 0.5
     dat.close()
-        
+
 #%% Plot profiles of T, O3, Q
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1,5,sharey=True)
@@ -103,7 +105,7 @@ plt.show()
 
 #%%
 pickle.dump(profs,open('profs.pkl','wb'))
-    
-        
+
+
 
 

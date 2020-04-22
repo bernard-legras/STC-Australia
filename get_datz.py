@@ -4,7 +4,9 @@
 Generate history of the trajectory from  January 2020
 
 Created on Sat Feb  8 12:27:14 2020
-Version that calculates and extracts the geopotential
+Version that calculates and extracts the geopotential,
+completing get_traject
+See comments in get_traject
 
 See get_traject for more comments
 
@@ -12,7 +14,7 @@ See get_traject for more comments
 """
 from datetime import datetime, timedelta
 from ECMWF_N import ECMWF
-import numpy as np
+#import numpy as np
 #from zISA import zISA
 import pickle,gzip
 #import matplotlib.pyplot as plt

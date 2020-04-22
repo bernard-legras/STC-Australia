@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate a list of positions of the Spirit center from manual pointing of CALIOP
-images
-
-Created on Wed Feb 12 01:09:16 2020
+Plot a row of selected CALIOP images for the 4th vortex
+Derived from plotL1ratio.py
 
 @author: Bernard Legras
 """
@@ -41,8 +39,19 @@ mymap=colors.ListedColormap(listcolors)
 mymap_sw=colors.ListedColormap(listcolors_sw)
 
 trac = pickle.load(open('Vortex-track_4thVortex.pkl','rb'))
-with gzip.open('OPZ-extract-4thVortex.pkl','rb') as f:
+
+with gzip.open('OPZ-extract-4thVortex-post.pkl','rb') as f:
+    dats2 = pickle.load(f)
+print(len(dats2))
+with gzip.open('OPZ-extract-4thVortex-pre.pkl','rb') as f:
     dats = pickle.load(f)
+print(len(dats))
+
+for i in range(1,18):
+    del dats2[i]
+for i in range(18,82):
+    dats[46+i-18] = dats2[i]
+print(len(dats))
 
 def get_vortex_pos(date):
     iv=0
@@ -150,35 +159,35 @@ for i in il:
     utc = tt.utc.datetime.flatten()
     utcc = utc[0]+0.5*(utc[-1]-utc[0])
     mnd = hdf.select('Molecular_Number_Density').get()[sel1L1,:]
-    lbeta512_met = np.log(1000 * mnd * Qs / (kbw*8*np.pi/3))
-    t512 = np.ma.masked_less(hdf.select('Total_Attenuated_Backscatter_532').get()[sel1L1,:],0)
-    #t512 = t512fil[sel1L1,:]
+    lbeta532_met = np.log(1000 * mnd * Qs / (kbw*8*np.pi/3))
+    t532 = np.ma.masked_less(hdf.select('Total_Attenuated_Backscatter_532').get()[sel1L1,:],0)
+    #t532 = t532fil[sel1L1,:]
     meta = hh.vstart().attach('metadata')
     alts = np.array(meta.read()[0][meta.field('Lidar_Data_Altitudes')._idx])
     meta = hh.vstart().attach('metadata')
     malts = np.array(meta.read()[0][meta.field('Met_Data_Altitudes')._idx])
     # calculation of the molecular backscatter
-    #fint = RegularGridInterpolator((lats[::-1],malts[::-1]),lbeta512_33[::-1,::-1])
-    #sr512 = t512/np.exp(fint(np.array(np.meshgrid(lats,alts,indexing='xy')).T))
+    #fint = RegularGridInterpolator((lats[::-1],malts[::-1]),lbeta532_33[::-1,::-1])
+    #sr532 = t532/np.exp(fint(np.array(np.meshgrid(lats,alts,indexing='xy')).T))
     print('start interpolation')
-    lbeta512_lid = np.empty(shape=t512.shape)
+    lbeta532_lid = np.empty(shape=t532.shape)
     for jy in range(len(lats)):
-        lbeta512_lid[jy,:] = np.interp(alts,malts[::-1],lbeta512_met[jy,::-1])
+        lbeta532_lid[jy,:] = np.interp(alts,malts[::-1],lbeta532_met[jy,::-1])
     print('end interpolation')
-    #fint = RegularGridInterpolator((malts[::-1]),lbeta512_33[::-1,::-1])
-    #sr512 = t512/np.exp(fint(np.array(np.meshgrid(lats,alts,indexing='xy')).T))
-    #sr512 = t512/np.exp(lbeta512_lid)
+    #fint = RegularGridInterpolator((malts[::-1]),lbeta532_33[::-1,::-1])
+    #sr532 = t532/np.exp(fint(np.array(np.meshgrid(lats,alts,indexing='xy')).T))
+    #sr532 = t532/np.exp(lbeta532_lid)
     # filter
-    sr512raw = t512/np.exp(lbeta512_lid)
+    sr532raw = t532/np.exp(lbeta532_lid)
     print('starting filtering')
-    sr512 = ss.medfilt(sr512raw,kernel_size=(81,1))
+    sr532 = ss.medfilt(sr532raw,kernel_size=(81,1))
     print('ending filtering')
-    #sr512 = gaussian_filter(ss.medfilt(sr512raw,kernel_size=(81,1)),4)
-    #sr512 = ss.medfilt(sr1,kernel_size=(1,11))
-    #sr512 = ss.medfilt(ss1,kernel_size=(1,5))
-    #aa = np.mean(np.reshape(sr512[:12450,:],(249,50,583)),axis=1)
+    #sr532 = gaussian_filter(ss.medfilt(sr532raw,kernel_size=(81,1)),4)
+    #sr532 = ss.medfilt(sr1,kernel_size=(1,11))
+    #sr532 = ss.medfilt(ss1,kernel_size=(1,5))
+    #aa = np.mean(np.reshape(sr532[:12450,:],(249,50,583)),axis=1)
     #ll = np.mean(np.reshape(lats[:12450],(249,50)),axis=1)
-    #sr512 = aa
+    #sr532 = aa
     #lats = ll
     latmin = max(latmin,np.min(lats))
     latmax = min(latmax,np.max(lats))
@@ -189,7 +198,7 @@ for i in il:
     lonmax = lons[0] % 360
     lonmid = 0.5*(lonmin+lonmax)
     if lonmax<lonmin: lonmid = (lonmid+180) % 360
-    im=ax[ifig].pcolormesh(lats,alts,sr512.T,cmap=cmap,vmin=0,vmax=6)
+    im=ax[ifig].pcolormesh(lats,alts,sr532.T,cmap=cmap,vmin=0,vmax=6)
     # Find the position of the vortex and generate the section
     try:
         [lonv,latv,zv,vomax,iv,c1,c2] = get_vortex_pos(utcc)

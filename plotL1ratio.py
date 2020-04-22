@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate a list of positions of the Spirit center from manual pointing of CALIOP
-images
+Generate a row of CALIOP scatter ratio for Koobor and selected dates between
+7 Jan and 4 Mar.
+This is the standard im=9 setup that generates an image with 9 panels
+When im = 10, a tenth image for 1st Jan is plotted on the left.
+When im = 1, the 1st January section is plotted as an isolated image.
+
+The corresponding location of the vortex is shown as a cross and a white line shows the contour
+of the half max vorticity in the vertical meridian plane passing by the center of the
+vortex projected onto that of the orbit.
 
 Created on Wed Feb 12 01:09:16 2020
 
@@ -163,18 +170,29 @@ kbw = 1.0313
 
 # elements: center lat, date, Exp, sel
 # version with 9 images
+caxframe = [0.92,0.12,0.015,0.76]
 if nbim == 9:
     il = {1:[64,-52.8,'7 Jan',False,12],2:[95,-45.3,'11 Jan',False,12],3:[138,-48.8,'16 Jan',False,12],
       4:[195,-61.54,'23 Jan',False,12],5:[264,-52.66,'31 Jan',False,12],6:[344,-50.66,'9 Feb',False,12],
-      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13],9:[1,-32,'4 mar',False,14]}
+      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13],9:[1,-32,'4 Mar',False,14]}
     fig, ax = plt.subplots(1,len(il),sharey=True,figsize=(18,3.5))
+    vmax = 20
 # version with 10 images
 elif nbim == 10:
     il = {0:[16,-40,'1 Jan',False,12],1:[64,-52.8,'7 Jan',False,12],2:[95,-45.3,'11 Jan',False,12],3:[138,-48.8,'16 Jan',False,12],
       4:[195,-61.54,'23 Jan',False,12],5:[264,-52.66,'31 Jan',False,12],6:[344,-50.66,'9 Feb',False,12],
-      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13],9:[1,-32,'4 mar',False,14]}
+      7:[426,-45.,'18 Feb',False,12],8:[468,-40,'25 Feb',False,13],9:[1,-32,'4 Mar',False,14]}
     fig, ax = plt.subplots(1,len(il),sharey=True,figsize=(20,3.5))
-
+    vmax = 20
+# plot a panel for 1st January
+elif nbim == 1:
+    il = {0:[16,-40,'1 Jan',False,12]}
+    fig, ax = plt.subplots(1,len(il),figsize=(3,3.5))
+    ax = [ax,]
+    vmax = 35
+    yinf = 12.5
+    ysup = 20
+    caxframe = [0.92,0.12,0.04,0.76]
 # for test purposes
 #il = {2:[95,-45.3,'11 Jan',False,12],9:[64,-32,'4 Mar',True,11]}
 #il = {4:[195,-61.54,'23 Jan',False,12],9:[1,-32,'4 Mar',False,14]}
@@ -247,7 +265,7 @@ for i in il:
     ii = np.where(lats>=latmax)[0][0]
     lonmax = lons[ii]
     lonmid = 0.5*(lonmin+lonmax) % 360
-    im=ax[ifig].pcolormesh(lats,alts,sr512.T,cmap=cmap,vmin=0,vmax=20)
+    im=ax[ifig].pcolormesh(lats,alts,sr512.T,cmap=cmap,vmin=0,vmax=vmax)
     if i >0:
         # Find the position of the vortex and generate the section
         [lonv,latv,zv,vomax,iv,c1,c2] = get_vortex_pos(Cald[il[i][0]]['utc'])
@@ -268,8 +286,8 @@ for i in il:
     #cid1 = fig.canvas.mpl_connect('button_press_event', on_click)
     #cid2 = fig.canvas.mpl_connect('key_press_event', on_key)
     ifig += 1
-#cax = fig.add_axes([0.17,-0.04,0.67,0.05])
-cax = fig.add_axes([0.92,0.12,0.015,0.76])
+
+cax = fig.add_axes(caxframe)
 cbar = fig.colorbar(im,cax,orientation='vertical')
 # version with 9 images
 if nbim == 9:
@@ -277,5 +295,7 @@ if nbim == 9:
 # version with 10 images
 elif nbim == 10:
     plt.savefig('figs/ascent_kompo_10_filtered.png',dpi=300,bbox_inches='tight')
+elif nbim == 1:
+    plt.savefig('figs/CALIOP_1stJan.png',dpi=300,bbox_inches='tight')
 plt.show()
 

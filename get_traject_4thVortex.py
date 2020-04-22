@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generate history of the trajectory from 7 January 2020
+Generate history of the trajctory of the Fourth vortex
+Adapted from get_traject
+This version includes the calculation of the geopotential.
+See comments in get_traject
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -9,18 +12,18 @@ Created on Sat Feb  8 12:27:14 2020
 """
 from datetime import datetime, timedelta
 from ECMWF_N import ECMWF
-import numpy as np
+#import numpy as np
 #from zISA import zISA
 import pickle,gzip
 #import matplotlib.pyplot as plt
 
-predates = False
-update = True
+predates = True
+update = False
 day1 = datetime(2020,2,24,6)
 day2 = day1 + timedelta(days=6)
 if predates:
-    day1 = datetime(2020,1,4,6)
-    day2 = day1 + timedelta(days=3)
+    day1 = datetime(2020,1,6,6)
+    day2 = day1 + timedelta(days=23)
     update = False
 
 if update==False:
@@ -49,10 +52,12 @@ while date < day2:
     dat._mkp()
     dat._mkz()
     datr = dat.shift2west(-179)
-    if date >= datetime(2020,1,4,6):
+    if date >= datetime(2020,2,24,6):
         dats[i] = datr.extract(varss=['T','VO','O3','Z'],latRange=(-70,-30),lonRange=(-60,60))
-    else:
+    elif date >= datetime(2020,1,30,6):
         dats[i] = dat.extract(varss=['T','VO','O3','Z'],latRange=(-80,-40),lonRange=(270,340))
+    else:
+        dats[i] = dat.extract(varss=['T','VO','O3','Z'],latRange=(-85,-55),lonRange=(180,310))
     dat.close()
     del dat
     del datr
@@ -60,7 +65,7 @@ while date < day2:
     i += 1
 
 if predates:
-    outfile = 'OPZ-extract-pre.pkl'
+    outfile = 'OPZ-extract-4thVortex-pre.pkl'
 else:
     outfile = 'OPZ-extract-4thVortex.pkl'
 with gzip.open(outfile,'wb') as f:

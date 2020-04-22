@@ -2,6 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Generate history of the trajectory from 7 January 2020
+This sccript makes the composit images of vorticity, ozone and temperature
+for the main vortex Koobor.
+Version Vc is based on the dates for which the CALIOP sections are available while
+version Vs is based on the dates for which the best TROPOMI data are available.
+
+The procedure is based on projecting boxes selected around the vortex at several dates
+onto a background field selected for on date. The projection is vertical for the horizontal
+chart and in latitude for the vertical lontigude x altitude sections. The latitude projection
+is done bases on the bined altitude of the center of the vortex (not the model level).
 
 Created on Sat Feb  8 12:27:14 2020
 
@@ -154,6 +163,9 @@ dat.var['O3'] -= O3zon[:,:,np.newaxis]
 Tzon = np.mean(dat.var['T'],axis=2)
 dat.var['T'] -= Tzon[:,:,np.newaxis]
 #%% Make multiplot
+# This sections loads the data and built composite data by projection in the horizontal
+# and vertical plane replacing the backgroung field
+# This part is common to all the projections that follow
 datp = dat.extract(varss=['VO','Z','O3','T'],latRange=(ysouth,ynorth),lonRange=(xwest,xeast))
 jy = np.where(datp.attr['lats']>=trac['lats'][i])[0][0]
 # Loop over the complementary maps
@@ -293,9 +305,11 @@ ax.plot((mean_track['centroid_lon'] % 360),mean_track['top_alt'],'o',markersize=
 ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
 ax.set_xlim(xwest,xeast)
 ax.set_ylim(15,34)
-ax.set_title(u'                vorticity (10$^{-5}$ s$^{-1}$)',fontsize=18)
-ax.set_xlabel('longitude')
-ax.set_ylabel('altitude (km)')
+ax.set_title(u'                vorticity (10$^{-5}$ s$^{-1}$)',fontsize=16)
+ax.set_xlabel('longitude',fontsize=14)
+ax.set_ylabel('altitude (km)',fontsize=14)
+ax.set_xticks((30,60,90,120,150,180,210,240,270))
+ax.set_xticklabels(['30°E','60°E','90°E','120°E','150°E','180°E','150°W','120°W','90°W'],fontsize=14)
 plt.savefig('figs/multiKoobor_vertical_VO_'+version+'.png',dpi=300,bbox_inches='tight')
 plt.savefig('figs/multiKoobor_vertical_VO_'+version+'.pdf',dpi=300,bbox_inches='tight')
 plt.show()
@@ -320,9 +334,11 @@ ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
 ax.set_xlim(xwest,xeast)
 ax.set_ylim(15,34)
-ax.set_title(u'                ozone anomaly (mg kg$^{-1}$)',fontsize=18)
-ax.set_xlabel('longitude')
-ax.set_ylabel('altitude (km)')
+ax.set_title(u'                ozone anomaly (mg kg$^{-1}$)',fontsize=16)
+ax.set_xlabel('longitude',fontsize=14)
+ax.set_ylabel('altitude (km)',fontsize=14)
+ax.set_xticks((30,60,90,120,150,180,210,240,270))
+ax.set_xticklabels(['30°E','60°E','90°E','120°E','150°E','180°E','150°W','120°W','90°W'],fontsize=14)
 plt.savefig('figs/multiKoobor_vertical_O3_'+version+'.png',dpi=300,bbox_inches='tight')
 plt.savefig('figs/multiKoobor_vertical_O3_'+version+'.pdf',dpi=300,bbox_inches='tight')
 plt.show()
@@ -348,10 +364,12 @@ ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
 ax.set_xlim(xwest,xeast)
 ax.set_ylim(15,34)
+ax.set_xlabel('longitude',fontsize=14)
+ax.set_ylabel('altitude (km)',fontsize=14)
+ax.set_xticks((30,60,90,120,150,180,210,240,270))
+ax.set_xticklabels(['30°E','60°E','90°E','120°E','150°E','180°E','150°W','120°W','90°W'],fontsize=14)
+ax.set_title(u'               temperature anomaly (K)',fontsize=16)
 
-ax.set_title(u'               temperature anomaly (K)',fontsize=18)
-ax.set_xlabel('longitude')
-ax.set_ylabel('altitude (km)')
 plt.savefig('figs/multiKoobor_vertical_T_'+version+'.png',dpi=300,bbox_inches='tight')
 plt.savefig('figs/multiKoobor_vertical_T_'+version+'.pdf',dpi=300,bbox_inches='tight')
 plt.show()

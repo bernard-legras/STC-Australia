@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Shows the sequence of CALIOP sectiosn in the vicinity of the July 2018
-eruption of the Ambae on 26 July at 21
+Plots CALIOP sections for the selected standrad V 3.40 orbits
+Meant to be run on ICARE
 """
 import pickle,gzip
 import matplotlib.pyplot as plt
@@ -35,19 +35,26 @@ dirL1 = '/DATA/LIENS/CALIOP/CAL_LID_L1.v3.40'
 dirCProf = '/DATA/LIENS/CALIOP/05kmCPro.v3.40'
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-s","--sel",type=int,choices=[0,1,2,3,4,5,6,7,8,12,13],help="selection")
+parser.add_argument("-s","--sel",type=int,choices=[0,1,2,3,4,5,6,7,8,12,13,14,15,16,17],help="selection")
 parser.add_argument("-f","--firsti",type=int,help="first index")
 parser.add_argument("-l","--lasti",type=int,help="last index")
 parser.add_argument("-list","--list",type=int,nargs='+')
 
 sel = 16
-# start at 1
-firsti = 61
+firsti = 122
 figsav = True
 show = False
 vmax = 6
 medfilter = True
 widthfilter = 161
+
+#sel = 17
+#firsti = 1
+#figsav = True
+#show = False
+#vmax = 6
+#medfilter = True
+#widthfilter = 81
 
 Qs = 5.167*1.e-31
 kbw = 1.0313
@@ -174,6 +181,15 @@ elif sel==16:
     xlocs = None
     yinf = 20
     ysup = 38
+elif sel==17:
+    # Antarctic
+    GEO = False
+    cm = 0
+    ext = [-180,-50,-85,-55]
+    xlims = [-180,-50]
+    xlocs = None
+    yinf = 12
+    ysup = 33
 elif sel>=8:
     GEO = False
     ext = [-120,0,-70,-30]
@@ -209,34 +225,34 @@ for i in listi:
 
     print('i',i)
     print(Cald[i]['fname'])
-    try:
-        file = os.path.join(dirday,'CAL_LID_L2_05kmAPro-Prov-V3-40.'+Cald[i]['fname']+'.hdf')
-        hdf = SD(file,SDC.READ)
-        hh = HDF.HDF(file,HDF.HC.READ)
-        lons = hdf.select('Longitude').get()[Cald[i]['sel1'],1] % 360
-        lats = hdf.select('Latitude').get()[Cald[i]['sel1'],1]
-        meta = hh.vstart().attach('metadata')
-        alts = np.array(meta.read()[0][meta.field('Lidar_Data_Altitudes')._idx])
-        #a512 = np.ma.masked_less(hdf.select('Aerosol_Multiple_Scattering_Profile_532').get()[Cald[i]['sel1'],:],0)
-        #e512 = np.ma.masked_less(hdf.select('Extinction_Coefficient_532').get()[Cald[i]['sel1'],:],0)
-        #f512 = np.ma.masked_less(hdf.select('Aerosol_Layer_Fraction').get()[Cald[i]['sel1'],:],0)
-        t512 = np.ma.masked_less(hdf.select('Total_Backscatter_Coefficient_532').get()[Cald[i]['sel1'],:],0)
-        AProOK = True
-    except:
-        AProOK = False
-        print('missing aerosol data')
+    # try:
+    #     file = os.path.join(dirday,'CAL_LID_L2_05kmAPro-Prov-V3-40.'+Cald[i]['fname']+'.hdf')
+    #     hdf = SD(file,SDC.READ)
+    #     hh = HDF.HDF(file,HDF.HC.READ)
+    #     lons = hdf.select('Longitude').get()[Cald[i]['sel1'],1] % 360
+    #     lats = hdf.select('Latitude').get()[Cald[i]['sel1'],1]
+    #     meta = hh.vstart().attach('metadata')
+    #     alts = np.array(meta.read()[0][meta.field('Lidar_Data_Altitudes')._idx])
+    #     #a512 = np.ma.masked_less(hdf.select('Aerosol_Multiple_Scattering_Profile_532').get()[Cald[i]['sel1'],:],0)
+    #     #e512 = np.ma.masked_less(hdf.select('Extinction_Coefficient_532').get()[Cald[i]['sel1'],:],0)
+    #     #f512 = np.ma.masked_less(hdf.select('Aerosol_Layer_Fraction').get()[Cald[i]['sel1'],:],0)
+    #     t512 = np.ma.masked_less(hdf.select('Total_Backscatter_Coefficient_532').get()[Cald[i]['sel1'],:],0)
+    #     AProOK = True
+    # except:
+    #     AProOK = False
+    #     print('missing aerosol data')
 
-    try:
-        fileC = os.path.join(dirdayC,'CAL_LID_L2_05kmCPro-Prov-V3-40.'+Cald[i]['fname']+'.hdf')
-        hdfC = SD(fileC,SDC.READ)
-        hhC = HDF.HDF(fileC,HDF.HC.READ)
-        t512C = np.ma.masked_less(hdfC.select('Total_Backscatter_Coefficient_532').get()[Cald[i]['sel1'],:],0)
-        metaC = hhC.vstart().attach('metadata')
-        altsC = np.array(metaC.read()[0][meta.field('Lidar_Data_Altitudes')._idx])
-        CProOK = True
-    except:
-        CProOK = False
-        print('missing cloud data')
+    # try:
+    #     fileC = os.path.join(dirdayC,'CAL_LID_L2_05kmCPro-Prov-V3-40.'+Cald[i]['fname']+'.hdf')
+    #     hdfC = SD(fileC,SDC.READ)
+    #     hhC = HDF.HDF(fileC,HDF.HC.READ)
+    #     t512C = np.ma.masked_less(hdfC.select('Total_Backscatter_Coefficient_532').get()[Cald[i]['sel1'],:],0)
+    #     metaC = hhC.vstart().attach('metadata')
+    #     altsC = np.array(metaC.read()[0][meta.field('Lidar_Data_Altitudes')._idx])
+    #     CProOK = True
+    # except:
+    #     CProOK = False
+    #     print('missing cloud data')
 
     try:
         fileL1 = os.path.join(dirdayL1,'CAL_LID_L1-ValStage1-V3-40.'+Cald[i]['fname']+'.hdf')
@@ -302,9 +318,12 @@ for i in listi:
         norm1 = colors.LogNorm(vmin=0.00001,vmax=0.1)
         print('dims',lats1.shape,alts1.shape,sr512.shape)
         #plt.pcolormesh(lats1,alts1,b512.T,cmap=mymap_sw,norm=norm1)
-        plt.pcolormesh(lats1,alts1,sr512.T,cmap='gist_ncar',vmin=0,vmax=6)
-        if vortex_1st : plt.plot(latv1,zv1,'r',marker='+',markersize=11)
-        if vortex_2nd : plt.plot(latv2,zv2,'r',marker='x',markersize=11)
+        if sel == 17:
+            plt.pcolormesh(lons1,alts1,sr512.T,cmap='gist_ncar',vmin=0,vmax=6)
+        else:
+            plt.pcolormesh(lats1,alts1,sr512.T,cmap='gist_ncar',vmin=0,vmax=6)
+            if vortex_1st : plt.plot(latv1,zv1,'r',marker='+',markersize=11)
+            if vortex_2nd : plt.plot(latv2,zv2,'r',marker='x',markersize=11)
         plt.title('{:d} {:16} {:.2f} {:.2f}'.format(i,Cald[i]['utc'].strftime('%Y-%m-%dT%H:%M'),lons1[0],lons1[-1]))
         plt.ylim(yinf,ysup)
         plt.title('Scattering ratio 512')
@@ -345,7 +364,7 @@ for i in listi:
         ax.plot(lonv2+cm,latv2,'r',marker='x',markersize=11)
     ax.plot(lons1+cm,lats1,'k')
     ax.plot(lons1-cm,lats1,'k')
-    plt.xlim(xlims[0],xlims[1])
+    ax.set_xlim(xlims[0],xlims[1])
     gl = ax.gridlines(draw_labels=True,xlocs=xlocs,
                       linewidth=2, color='gray', alpha=0.5, linestyle='--')
     gl.xlabels_top = False
@@ -356,12 +375,12 @@ for i in listi:
         plt.savefig('plotAus-'+str(sel)+'.'+str(i)+'.png',dpi=300,bbox_inches='tight')
     if show: plt.show()
     plt.close(fig=fig)
-    if AProOK:
-        hh.close()
-        hdf.end()
-    if CProOK:
-        hhC.close()
-        hdfC.end()
+    #if AProOK:
+    #    hh.close()
+    #    hdf.end()
+    #if CProOK:
+    #    hhC.close()
+    #    hdfC.end()
     if L1OK:
         hh1.close()
         hdf1.end()
