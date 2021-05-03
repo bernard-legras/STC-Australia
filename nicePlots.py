@@ -222,6 +222,7 @@ for i1 in events:
 #%%
 # horizontal multiplot
 # Plot the vorticity
+lcut = 122
 ax=datp.show('VO',kz,show=False,clim=(-2,10),scale=1.e5,aspect=1.414)
 bbox = dict(boxstyle='round4',fc='w')
 ax.text(trac['lons'][i]-cm,trac['lats'][i]+wy+6,date.strftime("%d %b"),
@@ -231,7 +232,9 @@ for i1 in events:
     date1 = date0 + timedelta(hours=12*i1)
     ax.text(trac['lons'][i1]-cm,trac['lats'][i1]+wy+5,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
-ax.plot(np.array(trac['lons'])-cm,trac['lats'],linewidth=3,color='yellow')
+#ax.plot(np.array(trac['lons'])-cm,trac['lats'],linewidth=3,color='yellow')
+ax.plot(np.array(trac['lons'][0:lcut])-cm,trac['lats'][0:lcut],linewidth=3,color='yellow')
+ax.plot(np.array(trac['lons'][lcut:]%360)-cm,trac['lats'][lcut:],linewidth=3,color='yellow')
 ax.plot((mean_track['centroid_lon'] % 360) - cm,mean_track['centroid_lat'],'o',markersize=8,color='r')
 ax.plot((trackSV.T[2] % 360)-cm,trackSV.T[3],'P',markersize=8,color='m',alpha=0.7)
 
@@ -246,7 +249,9 @@ plt.show()
 # horizontal multiplot
 # Plot the ozone anomaly
 ax=datp.show('O3',kz,show=False,scale=1.e6,aspect=1.414)
-ax.plot(np.array(trac['lons'])-cm,trac['lats'],linewidth=3,color='yellow')
+#ax.plot(np.array(trac['lons'])-cm,trac['lats'],linewidth=3,color='yellow')
+ax.plot(np.array(trac['lons'][0:lcut])-cm,trac['lats'][0:lcut],linewidth=3,color='yellow')
+ax.plot(np.array(trac['lons'][lcut:]%360)-cm,trac['lats'][lcut:],linewidth=3,color='yellow')
 #ax.plot((mean_track['centroid_lon'] % 360) - cm,mean_track['centroid_lat'],'o',markersize=8,color='r')
 #ax.plot((trackSV.T[2] % 360)-cm,trackSV.T[3],'d',markersize=8,color='g')
 bbox = dict(boxstyle='round4',fc='w')
@@ -299,7 +304,9 @@ for i1 in events:
     else: up = 7
     ax.text(trac['lons'][i1],trac['z'][i1]+up,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
-ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+#ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][0:lcut]),trac['z'][0:lcut],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][lcut:])%360,trac['z'][lcut:],linewidth=4,color='yellow')
 ax.plot((mean_track['centroid_lon'] % 360),mean_track['centroid_alt'],'o',markersize=5,color='r')
 ax.plot((mean_track['centroid_lon'] % 360),mean_track['top_alt'],'o',markersize=5,color='k')
 ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
@@ -328,7 +335,10 @@ for i1 in events:
     else: up = 7
     ax.text(trac['lons'][i1],trac['z'][i1]+up,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
-ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+#ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][:lcut]),trac['z'][:lcut],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][lcut:])%360,trac['z'][lcut:],linewidth=4,color='yellow')
+
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['centroid_alt'],'o',markersize=5,color='r')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['top_alt'],'o',markersize=5,color='k')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
@@ -358,7 +368,9 @@ for i1 in events:
     else: up = 7
     ax.text(trac['lons'][i1],trac['z'][i1]+up,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
-ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+#ax.plot(np.array(trac['lons']),trac['z'],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][:lcut]),trac['z'][:lcut],linewidth=4,color='yellow')
+ax.plot(np.array(trac['lons'][lcut:])%360,trac['z'][lcut:],linewidth=4,color='yellow')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['centroid_alt'],'o',markersize=5,color='r')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['top_alt'],'o',markersize=5,color='k')
 #ax.plot((mean_track['centroid_lon'] % 360),mean_track['bot_alt'],'o',markersize=5,color='w')
