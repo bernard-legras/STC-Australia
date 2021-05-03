@@ -158,7 +158,7 @@ for i in range(len(dats)):
     date += timedelta(hours=12)
 
 #%% print the positions as a function of time
-for i in range(len(dats)):
+for i in range(len(trac['dates'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i],trac['lats'][i],'{:2.1f}'.format(trac['z'][i]),trac['kz'][i])
 # beware that saving here will loose the wind tracking made in wind-census

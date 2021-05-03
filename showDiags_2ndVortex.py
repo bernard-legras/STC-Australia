@@ -37,6 +37,7 @@ def tracker(dats,lon,lat,upper=35,lower=70,idx=6,jdy=4):
     sample = dats.var['VO'][upper:lower,jmin:jmax,imin:imax]
     # find the 3d index of the max vorticity in the sample cube
     aa = np.unravel_index(np.argmax(sample, axis=None), sample.shape)
+    #print(jy,ix,jmin,jmax,imin,imax,aa)
     return([dats.attr['zscale'][upper+aa[0]],
             dats.attr['lats'][jmin+aa[1]],
             dats.attr['lons'][imin+aa[2]],
@@ -80,7 +81,7 @@ date = datetime(2020,1,5,6)
 for i in range(len(dats)):
     print(i)
     lower = 66
-    upper= 35
+    upper= 40
     idx = 6
     jdy = 4
     # track with one iteration
@@ -129,7 +130,15 @@ for i in range(len(dats)):
 for i in range(len(trac['p'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i]%360,trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
-pickle.dump(trac,open('Vortex-track_2ndVortex.pkl','wb'))
+#pickle.dump(trac,open('Vortex-track_2ndVortex.pkl','wb'))
+#%% Checker
+for i in range(0,len(trac['dates'])):
+    kz = trac['kz'][i]
+
+    ax=dats[i].show('VO',kz,txt=str(i)+'  '+str(kz)+trac['dates'][i].strftime('  %Y %b %d %HUTC  ')+str(int(trac['pt'][i]))+'K'+
+                 '   lon'+str(trac['lons'][i])+'   lat'+str(trac['lats'][i]),show=False,scale=1.e5,clim=(-10,10))
+    ax.plot(trac['lons'][i]-ax.cm_lon,trac['lats'][i],'firebrick',marker='x',ms=21,mew=2)
+    plt.show()
 
 #%% Localisation of the vortex
 fig,((ax0,ax1),(ax2,ax3))=plt.subplots(2,2,figsize=(8,8),sharex=True)

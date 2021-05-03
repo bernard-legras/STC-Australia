@@ -128,7 +128,7 @@ for i in range(0,102):
 for i in range(len(trac['p'])):
     # kz = np.where(dats[i].attr['zscale']<=trac['alts'][i])[0][0]
     print(i,trac['dates'][i],trac['lons'][i]%360,trac['lats'][i],'{:2.1f} {:2.1f}'.format(trac['z'][i],trac['vo'][i]*1.e5),trac['kz'][i])
-pickle.dump(trac,open('Vortex-track_4thVortex.pkl','wb'))
+#pickle.dump(trac,open('Vortex-track_4thVortex.pkl','wb'))
 #%% reload IFS trac dand TROPOMI TRAC
 trac = pickle.load(open('Vortex-track_4thVortex.pkl','rb'))
 for i in range(len(trac['p'])):
@@ -248,7 +248,7 @@ for i1 in events:
     ax.text(gl(trac['lons'][i1]%360),trac['lats'][i1]+wy+2,date1.strftime("%d %b"),
             ha="center",va="center",size="14",bbox=bbox)
 ax.plot(gl(np.array(trac['lons'])%360),trac['lats'],linewidth=5,color='yellow')
-ax.plot(gl(np.array(AIT[2:,2])%360),AIT[2:,3],'P',color='m',mew=0.3,markersize=13,alpha=0.7)
+ax.plot(gl(np.array(AIT[2:,2])%360),AIT[2:,3],'P',color='m',mew=0.3,markersize=13,alpha=0.5)
 ax.set_xlim(xwest,xeast)
 ax.set_title(u'vorticity (10$^{-5}$ s$^{-1}$)',fontsize=18)
 ax.set_xlabel('longitude')
